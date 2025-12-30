@@ -1,5 +1,8 @@
 export { PylonChatView } from "./PylonChatView";
-export type { PylonChatViewRef } from "./PylonChatView";
+export type {
+  PylonChatViewRef,
+  PylonChatViewInternalRef,
+} from "./PylonChatView";
 // React Native will automatically resolve to .ios.tsx or .android.tsx at runtime
 // TypeScript just needs to find the types from one of them
 export { PylonChatWidget } from "./PylonChatWidget";
