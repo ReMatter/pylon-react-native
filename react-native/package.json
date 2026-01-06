@@ -1,6 +1,6 @@
 {
   "name": "@rematter/pylon-react-native",
-  "version": "0.1.4",
+  "version": "0.1.7",
   "description": "Pylon Chat SDK for React Native",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",

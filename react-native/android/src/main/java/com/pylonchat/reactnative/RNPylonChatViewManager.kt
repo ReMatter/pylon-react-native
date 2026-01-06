@@ -15,7 +15,7 @@ import com.pylon.chatwidget.PylonConfig
 import com.pylon.chatwidget.PylonUser
 
 class RNPylonChatViewManager : SimpleViewManager<RNPylonChatView>() {
-    
+
     companion object {
         const val REACT_CLASS = "RNPylonChatView"
         const val COMMAND_OPEN_CHAT = 1
@@ -67,7 +67,7 @@ class RNPylonChatViewManager : SimpleViewManager<RNPylonChatView>() {
     fun setPointerEvents(view: RNPylonChatView, pointerEvents: String?) {
         val mode = pointerEvents ?: "auto"
         view.setPointerEventsMode(mode)
-        
+
         when (mode) {
             "none" -> {
                 // Don't handle any touches - let them pass through
@@ -126,6 +126,12 @@ class RNPylonChatViewManager : SimpleViewManager<RNPylonChatView>() {
     @ReactProp(name = "userAccountExternalId")
     fun setUserAccountExternalId(view: RNPylonChatView, id: String?) {
         view.userAccountExternalId = id
+    }
+
+    // Coordinate space adjustment
+    @ReactProp(name = "topInset", defaultFloat = 0f)
+    fun setTopInset(view: RNPylonChatView, inset: Float) {
+        view.topInset = inset
     }
 
     // Event names

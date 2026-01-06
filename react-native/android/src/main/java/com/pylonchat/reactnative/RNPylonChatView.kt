@@ -18,96 +18,107 @@ import com.pylon.chatwidget.PylonUser
  * This is kept as minimal as possible to avoid interfering with touch pass-through.
  */
 class RNPylonChatView(context: Context) : FrameLayout(context) {
-    
+
     private var pylonChatView: PylonChatView? = null
     private var config: PylonConfig? = null
     private var user: PylonUser? = null
-    
+
     // Config properties
     var appId: String? = null
         set(value) {
             field = value
             updateConfig()
         }
-    
+
     var widgetBaseUrl: String? = null
         set(value) {
             field = value
             updateConfig()
         }
-    
+
     var widgetScriptUrl: String? = null
         set(value) {
             field = value
             updateConfig()
         }
-    
+
     var enableLogging: Boolean = true
         set(value) {
             field = value
             updateConfig()
         }
-    
+
     var debugMode: Boolean = false
         set(value) {
             field = value
             updateConfig()
         }
-    
+
     var primaryColor: String? = null
         set(value) {
             field = value
             updateConfig()
         }
-    
+
     // User properties
     var userEmail: String? = null
         set(value) {
             field = value
             updateUser()
         }
-    
+
     var userName: String? = null
         set(value) {
             field = value
             updateUser()
         }
-    
+
     var userAvatarUrl: String? = null
         set(value) {
             field = value
             updateUser()
         }
-    
+
     var userEmailHash: String? = null
         set(value) {
             field = value
             updateUser()
         }
-    
+
     var userAccountId: String? = null
         set(value) {
             field = value
             updateUser()
         }
-    
+
     var userAccountExternalId: String? = null
         set(value) {
             field = value
             updateUser()
         }
 
+    // Safe area top inset for coordinate space adjustment
+    var topInset: Float = 0f
+        set(value) {
+            field = value
+            // Apply to pylonChatView if it exists
+            pylonChatView?.let {
+                // Note: Android PylonChat doesn't have topInset support yet,
+                // but we store it here for future use or coordinate adjustments
+            }
+        }
+
     init {
         layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
     }
-    
+
     // Track pointer events setting
     private var pointerEventsMode = "auto"
-    
+
     fun setPointerEventsMode(mode: String) {
         pointerEventsMode = mode
     }
-    
+
     /**
      * This is the CRITICAL method for pointerEvents.
      * By returning false here when pointerEvents="none", we tell React Native's
@@ -139,7 +150,7 @@ class RNPylonChatView(context: Context) : FrameLayout(context) {
 
     private fun updateConfig() {
         val id = appId ?: return
-        
+
         config = PylonConfig.build(id) {
             this.enableLogging = this@RNPylonChatView.enableLogging
             this.primaryColor = this@RNPylonChatView.primaryColor
@@ -147,14 +158,14 @@ class RNPylonChatView(context: Context) : FrameLayout(context) {
             this@RNPylonChatView.widgetBaseUrl?.let { this.widgetBaseUrl = it }
             this@RNPylonChatView.widgetScriptUrl?.let { this.widgetScriptUrl = it }
         }
-        
+
         recreatePylonView()
     }
-    
+
     private fun updateUser() {
         val email = userEmail ?: return
         val name = userName ?: return
-        
+
         user = PylonUser(
             email = email,
             name = name,
@@ -163,48 +174,48 @@ class RNPylonChatView(context: Context) : FrameLayout(context) {
             accountId = userAccountId,
             accountExternalId = userAccountExternalId
         )
-        
+
         recreatePylonView()
     }
-    
+
     private fun recreatePylonView() {
         val cfg = config ?: return
         val usr = user ?: return
-        
+
         // Remove old view
         pylonChatView?.let { removeView(it) }
-        
+
         // Create new PylonChatView
         val newView = PylonChatView(context, cfg, usr)
         newView.setListener(object : PylonChatListener {
             override fun onPylonLoaded() {
                 sendEvent("onPylonLoaded", Arguments.createMap())
             }
-            
+
             override fun onPylonInitialized() {
                 sendEvent("onPylonInitialized", Arguments.createMap())
             }
-            
+
             override fun onPylonReady() {
                 sendEvent("onPylonReady", Arguments.createMap())
             }
-            
+
             override fun onMessageReceived(message: String) {
                 val params = Arguments.createMap()
                 params.putString("message", message)
                 sendEvent("onMessageReceived", params)
             }
-            
+
             override fun onChatOpened() {
                 sendEvent("onChatOpened", Arguments.createMap())
             }
-            
+
             override fun onChatClosed() {
                 val params = Arguments.createMap()
                 params.putBoolean("wasOpen", true)
                 sendEvent("onChatClosed", params)
             }
-            
+
             override fun onInteractiveBoundsChanged(selector: String, left: Float, top: Float, right: Float, bottom: Float) {
                 // Convert pixels to density-independent pixels (dp) for React Native.
                 val density = resources.displayMetrics.density
@@ -216,57 +227,57 @@ class RNPylonChatView(context: Context) : FrameLayout(context) {
                 params.putDouble("bottom", (bottom / density).toDouble())
                 sendEvent("onInteractiveBoundsChanged", params)
             }
-            
+
             override fun onPylonError(error: String) {
                 val params = Arguments.createMap()
                 params.putString("error", error)
                 sendEvent("onPylonError", params)
             }
-            
+
             override fun onUnreadCountChanged(count: Int) {
                 val params = Arguments.createMap()
                 params.putInt("count", count)
                 sendEvent("onUnreadCountChanged", params)
             }
-            
+
             override fun onFileChooserLaunched(requestCode: Int) {
                 // Handle file chooser if needed
             }
         })
-        
+
         newView.layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
         addView(newView)
         pylonChatView = newView
     }
-    
+
     private fun sendEvent(eventName: String, params: WritableMap) {
         val reactContext = context as ReactContext
         reactContext
             .getJSModule(RCTEventEmitter::class.java)
             .receiveEvent(id, eventName, params)
     }
-    
+
     // Imperative methods
     fun openChat() {
         pylonChatView?.openChat()
     }
-    
+
     fun closeChat() {
         pylonChatView?.closeChat()
     }
-    
+
     fun showChatBubble() {
         pylonChatView?.showChatBubble()
     }
-    
+
     fun hideChatBubble() {
         pylonChatView?.hideChatBubble()
     }
-    
+
     fun showNewMessage(message: String, isHtml: Boolean) {
         pylonChatView?.showNewMessage(message, isHtml)
     }
-    
+
     fun setNewIssueCustomFields(fields: Map<String, Any?>) {
         @Suppress("UNCHECKED_CAST")
         pylonChatView?.setNewIssueCustomFields(fields as Map<String, Any>)
@@ -276,19 +287,19 @@ class RNPylonChatView(context: Context) : FrameLayout(context) {
         @Suppress("UNCHECKED_CAST")
         pylonChatView?.setTicketFormFields(fields as Map<String, Any>)
     }
-    
+
     fun updateEmailHash(emailHash: String?) {
         pylonChatView?.setEmailHash(emailHash)
     }
-    
+
     fun showTicketForm(slug: String) {
         pylonChatView?.showTicketForm(slug)
     }
-    
+
     fun showKnowledgeBaseArticle(articleId: String) {
         pylonChatView?.showKnowledgeBaseArticle(articleId)
     }
-    
+
     fun clickElementAtSelector(selector: String) {
         // Trigger a click on the element with the given ID selector.
         // This is used for Android's proxy-based touch pass-through system.
